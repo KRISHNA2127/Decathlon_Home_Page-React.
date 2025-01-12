@@ -1,1 +1,77 @@
-aW1wb3J0IFJlYWN0LCB7IGNyZWF0ZUNvbnRleHQsIHVzZUNvbnRleHQsIHVzZVN0YXRlIH0gZnJvbSAncmVhY3QnOwoKY29uc3QgU2hvcENvbnRleHQgPSBjcmVhdGVDb250ZXh0KCk7CgpleHBvcnQgY29uc3QgU2hvcFByb3ZpZGVyID0gKHsgY2hpbGRyZW4gfSkgPT4gewogIGNvbnN0IFtjYXJ0SXRlbXMsIHNldENhcnRJdGVtc10gPSB1c2VTdGF0ZShbXSk7CiAgY29uc3QgW3VzZXJQcmVmZXJlbmNlcywgc2V0VXNlclByZWZlcmVuY2VzXSA9IHVzZVN0YXRlKHsKICAgIGRlbGl2ZXJ5UGluY29kZTogJzU2MDAwMicsCiAgICBwcmVmZXJyZWRMYW5ndWFnZTogJ2VuJwogIH0pOwoKICBjb25zdCBhZGRUb0NhcnQgPSAocHJvZHVjdCkgPT4gewogICAgc2V0Q2FydEl0ZW1zKHByZXZJdGVtcyA9PiB7CiAgICAgIGNvbnN0IGV4aXN0aW5nSXRlbSA9IHByZXZJdGVtcy5maW5kKGl0ZW0gPT4gaXRlbS5pZCA9PT0gcHJvZHVjdC5pZCk7CiAgICAgIGlmIChleGlzdGluZ0l0ZW0pIHsKICAgICAgICByZXR1cm4gcHJldkl0ZW1zLm1hcChpdGVtID0+CiAgICAgICAgICBpdGVtLmlkID09PSBwcm9kdWN0LmlkCiAgICAgICAgICAgID8geyAuLi5pdGVtLCBxdWFudGl0eTogaXRlbS5xdWFudGl0eSArIDEgfQogICAgICAgICAgICA6IGl0ZW0KICAgICAgICApOwogICAgICB9CiAgICAgIHJldHVybiBbLi4ucHJldkl0ZW1zLCB7IC4uLnByb2R1Y3QsIHF1YW50aXR5OiAxIH1dOwogICAgfSk7CiAgfTsKCiAgY29uc3QgdmFsdWUgPSB7CiAgICBjYXJ0SXRlbXMsCiAgICB1c2VyUHJlZmVyZW5jZXMsCiAgICBhZGRUb0NhcnQsCiAgICBzZXRVc2VyUHJlZmVyZW5jZXMKICB9OwoKICByZXR1cm4gKAogICAgPFNob3BDb250ZXh0LlByb3ZpZGVyIHZhbHVlPXt2YWx1ZX0+CiAgICAgIHtjaGlsZHJlbn0KICAgIDwvU2hvcENvbnRleHQuUHJvdmlkZXI+CiAgKTsKfTsKCmV4cG9ydCBjb25zdCB1c2VTaG9wID0gKCkgPT4gewogIGNvbnN0IGNvbnRleHQgPSB1c2VDb250ZXh0KFNob3BDb250ZXh0KTsKICBpZiAoIWNvbnRleHQpIHsKICAgIHRocm93IG5ldyBFcnJvcigndXNlU2hvcCBtdXN0IGJlIHVzZWQgd2l0aGluIGEgU2hvcFByb3ZpZGVyJyk7CiAgfQogIHJldHVybiBjb250ZXh0Owp9Ow==
+// src/context/ShopContext.js
+import React, { createContext, useContext, useState } from 'react';
+
+// Create the context
+const ShopContext = createContext();
+
+// Create the provider component
+export const ShopProvider = ({ children }) => {
+  // State for cart items
+  const [cartItems, setCartItems] = useState([]);
+  
+  // State for user preferences
+  const [userPreferences, setUserPreferences] = useState({
+    deliveryPincode: '560002',
+    preferredLanguage: 'en'
+  });
+
+  // Function to add items to cart
+  const addToCart = (product) => {
+    setCartItems(prevItems => {
+      // Check if item already exists in cart
+      const existingItem = prevItems.find(item => item.id === product.id);
+      if (existingItem) {
+        // If exists, increase quantity
+        return prevItems.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      // If new item, add to cart with quantity 1
+      return [...prevItems, { ...product, quantity: 1 }];
+    });
+  };
+
+  // Function to remove items from cart
+  const removeFromCart = (productId) => {
+    setCartItems(prevItems =>
+      prevItems.filter(item => item.id !== productId)
+    );
+  };
+
+  // Function to update user preferences
+  const updatePreferences = (newPreferences) => {
+    setUserPreferences(prev => ({
+      ...prev,
+      ...newPreferences
+    }));
+  };
+
+  // Value object that will be shared across components
+  const value = {
+    cartItems,
+    userPreferences,
+    addToCart,
+    removeFromCart,
+    updatePreferences,
+    setUserPreferences
+  };
+
+  return (
+    <ShopContext.Provider value={value}>
+      {children}
+    </ShopContext.Provider>
+  );
+};
+
+// Custom hook for using the shop context
+export const useShop = () => {
+  const context = useContext(ShopContext);
+  if (!context) {
+    throw new Error('useShop must be used within a ShopProvider');
+  }
+  return context;
+};
+
+export default ShopContext;
