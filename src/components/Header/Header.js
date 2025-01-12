@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useShop } from '../../context/ShopContext';
-import useSearch from '../../hooks/useSearch';
 import './Header.css';
 
 const Header = () => {
-  // Using custom hooks for search functionality
-  const { query, setQuery, results, loading } = useSearch();
-  const { userPreferences, setUserPreferences } = useShop();
   const [isFixed, setIsFixed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [deliveryPincode, setDeliveryPincode] = useState('560002');
 
   // Handle scroll effect for fixed header
   useEffect(() => {
@@ -19,12 +16,18 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Handle search
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    // You can implement search functionality here later
+  };
+
   // Handle pincode change
-  const handlePincodeChange = (newPincode) => {
-    setUserPreferences(prev => ({
-      ...prev,
-      deliveryPincode: newPincode
-    }));
+  const handlePincodeChange = () => {
+    const newPincode = prompt('Enter new pincode:');
+    if (newPincode) {
+      setDeliveryPincode(newPincode);
+    }
   };
 
   return (
@@ -46,21 +49,11 @@ const Header = () => {
         <i className="fas fa-search search-icon" />
         <input
           type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          value={searchQuery}
+          onChange={handleSearch}
           placeholder="Search for 'Running'"
           className="search-input"
         />
-        {loading && <span className="search-loading">Searching...</span>}
-        {results.length > 0 && (
-          <div className="search-results">
-            {results.map(result => (
-              <div key={result.id} className="search-result-item">
-                {result.name}
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Right Section: User Actions */}
@@ -68,9 +61,9 @@ const Header = () => {
         <div className="delivery-location">
           <span>Delivery Location</span>
           <div className="pincode">
-            <span className="code">{userPreferences.deliveryPincode}</span>
+            <span className="code">{deliveryPincode}</span>
             <button 
-              onClick={() => handlePincodeChange(prompt('Enter new pincode:'))}
+              onClick={handlePincodeChange}
               className="change-link"
             >
               CHANGE
