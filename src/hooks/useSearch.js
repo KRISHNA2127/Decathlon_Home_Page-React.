@@ -1,1 +1,68 @@
-aW1wb3J0IHsgdXNlU3RhdGUsIHVzZUNhbGxiYWNrLCB1c2VFZmZlY3QgfSBmcm9tICdyZWFjdCc7Cgpjb25zdCB1c2VTZWFyY2ggPSAoaW5pdGlhbFF1ZXJ5ID0gJycpID0+IHsKICBjb25zdCBbcXVlcnksIHNldFF1ZXJ5XSA9IHVzZVN0YXRlKGluaXRpYWxRdWVyeSk7CiAgY29uc3QgW3Jlc3VsdHMsIHNldFJlc3VsdHNdID0gdXNlU3RhdGUoW10pOwogIGNvbnN0IFtsb2FkaW5nLCBzZXRMb2FkaW5nXSA9IHVzZVN0YXRlKGZhbHNlKTsKCiAgY29uc3Qgc2VhcmNoUHJvZHVjdHMgPSB1c2VDYWxsYmFjayhhc3luYyAoc2VhcmNoUXVlcnkpID0+IHsKICAgIHNldExvYWRpbmcodHJ1ZSk7CiAgICB0cnkgewogICAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKGAvYXBpL3Byb2R1Y3RzL3NlYXJjaD9xPSR7c2VhcmNoUXVlcnl9YCk7CiAgICAgIGNvbnN0IGRhdGEgPSBhd2FpdCByZXNwb25zZS5qc29uKCk7CiAgICAgIHNldFJlc3VsdHMoZGF0YSk7CiAgICB9IGNhdGNoIChlcnJvcikgewogICAgICBjb25zb2xlLmVycm9yKCdTZWFyY2ggZmFpbGVkOicsIGVycm9yKTsKICAgIH0gZmluYWxseSB7CiAgICAgIHNldExvYWRpbmcoZmFsc2UpOwogICAgfQogIH0sIFtdKTsKCiAgdXNlRWZmZWN0KCgpID0+IHsKICAgIGlmIChxdWVyeSkgewogICAgICBjb25zdCBkZWJvdW5jZVRpbWVvdXQgPSBzZXRUaW1lb3V0KCgpID0+IHsKICAgICAgICBzZWFyY2hQcm9kdWN0cyhxdWVyeSk7CiAgICAgIH0sIDMwMCk7CgogICAgICByZXR1cm4gKCkgPT4gY2xlYXJUaW1lb3V0KGRlYm91bmNlVGltZW91dCk7CiAgICB9CiAgfSwgW3F1ZXJ5LCBzZWFyY2hQcm9kdWN0c10pOwoKICByZXR1cm4geyBxdWVyeSwgc2V0UXVlcnksIHJlc3VsdHMsIGxvYWRpbmcgfTsKfTsKCmV4cG9ydCBkZWZhdWx0IHVzZVNlYXJjaDsK
+import { useState, useCallback, useEffect } from 'react';
+
+/**
+ * A custom hook for handling product search functionality
+ * @param {string} initialQuery - The initial search query (optional)
+ * @returns {Object} An object containing search state and functions
+ */
+const useSearch = (initialQuery = '') => {
+  // State for the search query
+  const [query, setQuery] = useState(initialQuery);
+  
+  // State for search results
+  const [results, setResults] = useState([]);
+  
+  // State for loading status
+  const [loading, setLoading] = useState(false);
+
+  // Memoized search function to prevent unnecessary re-renders
+  const searchProducts = useCallback(async (searchQuery) => {
+    // Don't search if query is empty
+    if (!searchQuery.trim()) {
+      setResults([]);
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      // Make API call to search endpoint
+      const response = await fetch(`/api/products/search?q=${encodeURIComponent(searchQuery)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Search failed with status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setResults(data);
+    } catch (error) {
+      console.error('Search failed:', error);
+      // Set empty results in case of error
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Empty dependency array since this function doesn't depend on any props or state
+
+  // Effect to handle search with debouncing
+  useEffect(() => {
+    // Create a debounce timeout to avoid too many API calls
+    const debounceTimeout = setTimeout(() => {
+      if (query) {
+        searchProducts(query);
+      }
+    }, 300); // Wait 300ms after the user stops typing before searching
+
+    // Cleanup function to clear timeout if query changes before timeout expires
+    return () => clearTimeout(debounceTimeout);
+  }, [query, searchProducts]);
+
+  return {
+    query,      // Current search query
+    setQuery,   // Function to update search query
+    results,    // Search results array
+    loading     // Boolean indicating if search is in progress
+  };
+};
+
+export default useSearch;
