@@ -1,4 +1,3 @@
-// src/context/ShopContext.js
 import React, { createContext, useContext, useState } from 'react';
 
 // Create the context
